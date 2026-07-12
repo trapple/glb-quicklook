@@ -153,6 +153,9 @@ targets:
       path: PreviewExtension/Info.plist
       properties:
         CFBundleDisplayName: GLB Preview
+        # XcodeGen が構成によって BNDL を書くことがあるが、appex は XPC! でないと
+        # pluginkit に登録されない (QLが「機能拡張が見つかりません」になる)
+        CFBundlePackageType: "XPC!"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.quicklook.preview
           NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).PreviewViewController"
@@ -189,9 +192,14 @@ build: gen
 	xcodebuild -project $(APP).xcodeproj -scheme $(APP) -configuration Release \
 		-derivedDataPath $(DERIVED) build
 
+LSREGISTER := /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister
+
 install: build
+	-pkill -x $(APP)
+	-$(LSREGISTER) -u $(DERIVED)/Build/Products/Release/$(APP).app
 	rm -rf /Applications/$(APP).app
-	cp -R $(DERIVED)/Build/Products/Release/$(APP).app /Applications/
+	ditto $(DERIVED)/Build/Products/Release/$(APP).app /Applications/$(APP).app
+	$(LSREGISTER) -f -R -trusted /Applications/$(APP).app
 	open /Applications/$(APP).app
 
 test: gen
@@ -342,9 +350,13 @@ final class EntityFramingTests: XCTestCase {
   UnitTests:
     type: bundle.unit-test
     platform: macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
     sources:
       - Tests
       - path: PreviewExtension/EntityFraming.swift
+      - path: PreviewExtension/PinchZoom.swift
 ```
 
 トップレベル (`packages:` の上あたり) に追加:
@@ -504,6 +516,23 @@ light.light.intensity = 2000
 light.orientation = simd_quatf(angle: -.pi / 4, axis: SIMD3<Float>(1, 0, 0))
 content.add(light)
 ```
+
+- [ ] **Step 3.5: ズーム追加 (ピンチ + 2本指スクロール)**
+
+実機検証の結果:
+1. `.realityViewCameraControls(.orbit)` はドラッグ回転のみで、ピンチ/スクロールのズームを含まない
+2. SwiftUI `MagnifyGesture` にはQLホスト内でピンチイベントが配送されない
+3. `NSEvent.addLocalMonitorForEvents` には magnify / scrollWheel とも届く (実証済みの経路)
+
+よって回転は `.orbit` に任せたまま、ズームは AppKit イベントモニタ → `PinchZoomController` で実装する:
+
+- `PinchZoomController` (@MainActor): 原点中心のズーム用親 Entity を等倍スケール。倍率 0.1〜20 クランプ。UnitTests でテスト
+- `magnify` (ピンチ) → `applyMagnification(delta: event.magnification)`
+- `scrollWheel` (2本指スクロール) → `applyMagnification(delta: event.scrollingDeltaY * 0.01)`
+
+注意: glTF がカメラを内包する場合 (例: Duck.glb)、変換後のカメラがズーム用親 Entity の中で
+アクティブカメラになり、ズームがモデルと一緒にスケールされ打ち消される (実機確認済み)。
+ロード後に `PerspectiveCameraComponent` をツリーから全除去する (`removeCameras(from:)`、UnitTests でテスト)。
 
 - [ ] **Step 4: テクスチャ/PBR 確認**
 

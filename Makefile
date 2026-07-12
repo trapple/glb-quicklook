@@ -23,9 +23,14 @@ build: gen
 	xcodebuild -project $(APP).xcodeproj -scheme $(APP) -configuration Release \
 		-derivedDataPath $(DERIVED) build
 
+LSREGISTER := /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister
+
 install: build
+	-pkill -x $(APP)
+	-$(LSREGISTER) -u $(DERIVED)/Build/Products/Release/$(APP).app
 	rm -rf /Applications/$(APP).app
-	cp -R $(DERIVED)/Build/Products/Release/$(APP).app /Applications/
+	ditto $(DERIVED)/Build/Products/Release/$(APP).app /Applications/$(APP).app
+	$(LSREGISTER) -f -R -trusted /Applications/$(APP).app
 	open /Applications/$(APP).app
 
 test: gen

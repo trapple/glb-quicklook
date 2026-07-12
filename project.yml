@@ -61,16 +61,7 @@ targets:
       base:
         # 親アプリの bundle ID をプレフィックスにしないと ValidateEmbeddedBinary で失敗する
         PRODUCT_BUNDLE_IDENTIFIER: jp.trapple.GLBQuickLook.PreviewExtension
-    dependencies:
-      - framework: vendor/GLTFKit2.xcframework
-        embed: false
-
-  UnitTests:
-    type: bundle.unit-test
-    platform: macOS
-    sources:
-      - Tests
-      - path: PreviewExtension/EntityFraming.swift
+    # sandbox 必須: 無いと pkd が "plug-ins must be sandboxed" で登録を拒否する
     entitlements:
       path: PreviewExtension/PreviewExtension.entitlements
       properties:
@@ -79,9 +70,26 @@ targets:
       path: PreviewExtension/Info.plist
       properties:
         CFBundleDisplayName: GLB Preview
+        # appex は XPC! でないと pluginkit に登録されない
+        CFBundlePackageType: "XPC!"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.quicklook.preview
           NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).PreviewViewController"
           NSExtensionAttributes:
             QLSupportedContentTypes: [org.khronos.glb]
             QLSupportsSearchableItems: false
+    dependencies:
+      - framework: vendor/GLTFKit2.xcframework
+        embed: false
+
+  UnitTests:
+    type: bundle.unit-test
+    platform: macOS
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    sources:
+      - Tests
+      - path: PreviewExtension/EntityFraming.swift
+      - path: PreviewExtension/PinchZoom.swift
+      - path: PreviewExtension/EntitySanitizer.swift
