@@ -6,7 +6,7 @@ GLTFKIT2_VERSION := 0.5.15
 GLTFKIT2_URL := https://github.com/warrenm/GLTFKit2/releases/download/$(GLTFKIT2_VERSION)/GLTFKit2.xcframework.zip
 GLTFKIT2_SHA256 := 9d0c338282acce4986494aa02a5f1495278f56c60d43f31453fefea6875b4928
 
-.PHONY: gen build install test ql reset fixtures vendor
+.PHONY: gen build install test ql reset fixtures vendor release release-check
 
 vendor/GLTFKit2.xcframework:
 	mkdir -p vendor
@@ -42,6 +42,12 @@ ql:
 
 reset:
 	qlmanage -r && qlmanage -r cache
+
+release:
+	bash scripts/release.sh
+
+release-check:
+	bash scripts/release.sh check
 
 fixtures:
 	mkdir -p fixtures
