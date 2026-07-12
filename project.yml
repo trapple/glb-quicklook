@@ -11,6 +11,16 @@ settings:
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "-"
 
+schemes:
+  GLBQuickLook:
+    build:
+      targets:
+        GLBQuickLook: all
+    run:
+      config: Release
+    test:
+      targets: [UnitTests]
+
 # GLTFKit2 は SPM binaryTarget (動的 XCFramework)。SPM 経由だと XcodeGen で
 # 埋め込みを構成できないため、Makefile の vendor ターゲットで直接取得する
 targets:
@@ -54,6 +64,13 @@ targets:
     dependencies:
       - framework: vendor/GLTFKit2.xcframework
         embed: false
+
+  UnitTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests
+      - path: PreviewExtension/EntityFraming.swift
     entitlements:
       path: PreviewExtension/PreviewExtension.entitlements
       properties:
