@@ -74,6 +74,14 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 ```
 
+さらに、生成される Info.plist がリテラル値を焼き込まないよう、両ターゲットの `info.properties` に
+ビルド設定参照を明示する (XcodeGen はデフォルトで "1.0" をリテラルで書く):
+
+```yaml
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+```
+
 - [ ] **Step 2: ビルドして反映を確認**
 
 実行: `make build && plutil -p build/Build/Products/Release/GLBQuickLook.app/Contents/Info.plist | grep ShortVersion` (timeout 600s)

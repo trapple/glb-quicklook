@@ -10,6 +10,9 @@ settings:
     SWIFT_VERSION: "5.10"
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "-"
+    # バージョンの正。リリース時は scripts/release.sh がここを読む
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
 
 schemes:
   GLBQuickLook:
@@ -31,6 +34,8 @@ targets:
     info:
       path: GLBQuickLook/Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSPrincipalClass: NSApplication
         NSMainStoryboardFile: ""
         CFBundleDocumentTypes:
@@ -69,6 +74,8 @@ targets:
     info:
       path: PreviewExtension/Info.plist
       properties:
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: GLB Preview
         # appex は XPC! でないと pluginkit に登録されない
         CFBundlePackageType: "XPC!"
