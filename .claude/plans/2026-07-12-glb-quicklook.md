@@ -82,6 +82,7 @@ Quick Look 配線 (登録 → スペースキーでビューが出る) をテキ
 *.xcodeproj
 build/
 fixtures/
+vendor/
 .DS_Store
 ```
 
@@ -101,11 +102,8 @@ settings:
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "-"
 
-packages:
-  GLTFKit2:
-    url: https://github.com/warrenm/GLTFKit2
-    from: "0.5.0"
-
+# GLTFKit2 は SPM binaryTarget (動的 XCFramework)。SPM 経由だと XcodeGen で
+# 埋め込みを構成できないため、Makefile の vendor ターゲットで直接取得する
 targets:
   GLBQuickLook:
     type: application
@@ -131,13 +129,22 @@ targets:
     dependencies:
       - target: PreviewExtension
         embed: true
+      # GLTFKit2 は動的フレームワーク。ホスト側に embed し、appex は dyld の
+      # 親アプリ Frameworks 探索パス経由で解決する (appex 側 embed だと二重に太る)
+      - framework: vendor/GLTFKit2.xcframework
+        embed: true
 
   PreviewExtension:
     type: app-extension
     platform: macOS
     sources: [PreviewExtension]
+    settings:
+      base:
+        # 親アプリの bundle ID をプレフィックスにしないと ValidateEmbeddedBinary で失敗する
+        PRODUCT_BUNDLE_IDENTIFIER: jp.trapple.GLBQuickLook.PreviewExtension
     dependencies:
-      - package: GLTFKit2
+      - framework: vendor/GLTFKit2.xcframework
+        embed: false
     entitlements:
       path: PreviewExtension/PreviewExtension.entitlements
       properties:
@@ -161,9 +168,21 @@ APP := GLBQuickLook
 DERIVED := build
 FIXTURE_BASE := https://github.com/KhronosGroup/glTF-Sample-Assets/raw/main/Models
 
-.PHONY: gen build install test ql reset fixtures
+GLTFKIT2_VERSION := 0.5.15
+GLTFKIT2_URL := https://github.com/warrenm/GLTFKit2/releases/download/$(GLTFKIT2_VERSION)/GLTFKit2.xcframework.zip
+GLTFKIT2_SHA256 := 9d0c338282acce4986494aa02a5f1495278f56c60d43f31453fefea6875b4928
 
-gen:
+.PHONY: gen build install test ql reset fixtures vendor
+
+vendor/GLTFKit2.xcframework:
+	mkdir -p vendor
+	curl -L --max-time 300 -o vendor/GLTFKit2.xcframework.zip $(GLTFKIT2_URL)
+	echo "$(GLTFKIT2_SHA256)  vendor/GLTFKit2.xcframework.zip" | shasum -a 256 -c -
+	cd vendor && unzip -oq GLTFKit2.xcframework.zip && rm GLTFKit2.xcframework.zip
+
+vendor: vendor/GLTFKit2.xcframework
+
+gen: vendor
 	xcodegen generate
 
 build: gen

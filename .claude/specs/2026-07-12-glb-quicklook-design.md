@@ -43,12 +43,14 @@ GLBQuickLook.app (ホスト。ほぼ空。/Applications に置いて拡張を登
 └── PreviewExtension.appex (com.apple.quicklook.preview)
     ├── PreviewViewController  … QLPreviewingController 実装。入口
     ├── ModelPreviewView       … SwiftUI。RealityView + 背景切替ボタン
-    └── GLTFKit2 (SPM)         … .glb パース + RealityKit エンティティ変換
+    └── GLTFKit2 (バイナリ XCFramework を vendor/ に取得して埋め込み)
+                               … .glb パース + RealityKit エンティティ変換
 ```
 
 - **PreviewViewController**: `preparePreviewOfFile(at:)` で URL を受け取り、GLTFKit2 でロード → `NSHostingView` で SwiftUI ビューを載せる薄い層
 - **ModelPreviewView**: `RealityView` にエンティティを配置。カメラ操作は `.realityViewCameraControls(.orbit)` に任せる。右上に背景色切替ボタンを 1 つだけ置く
 - 依存は **GLTFKit2 の 1 つだけ**。JS・WebView・同梱アセットなし
+  - GLTFKit2 は SPM の binaryTarget (動的 XCFramework)。SPM 経由だと XcodeGen で埋め込みが構成できないため、公式リリースの XCFramework zip (checksum 検証付き) を `vendor/` に取得してホストアプリに埋め込む
 - ビルドは **XcodeGen (project.yml)** でプロジェクト定義をテキスト管理 (.xcodeproj は git 管理外)
 - 対象 UTI: `org.khronos.glb` (`QLSupportedContentTypes`)
 

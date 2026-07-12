@@ -1,0 +1,70 @@
+name: GLBQuickLook
+options:
+  bundleIdPrefix: jp.trapple
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+
+# GLTFKit2 は SPM binaryTarget (動的 XCFramework)。SPM 経由だと XcodeGen で
+# 埋め込みを構成できないため、Makefile の vendor ターゲットで直接取得する
+targets:
+  GLBQuickLook:
+    type: application
+    platform: macOS
+    sources: [GLBQuickLook]
+    info:
+      path: GLBQuickLook/Info.plist
+      properties:
+        NSPrincipalClass: NSApplication
+        NSMainStoryboardFile: ""
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: glTF Binary
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Default
+            LSItemContentTypes: [org.khronos.glb]
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: org.khronos.glb
+            UTTypeDescription: glTF Binary
+            UTTypeConformsTo: [public.data, public.3d-content]
+            UTTypeTagSpecification:
+              public.filename-extension: [glb]
+              public.mime-type: [model/gltf-binary]
+    dependencies:
+      - target: PreviewExtension
+        embed: true
+      # GLTFKit2 は動的フレームワーク。ホスト側に embed し、appex は dyld の
+      # 親アプリ Frameworks 探索パス経由で解決する
+      - framework: vendor/GLTFKit2.xcframework
+        embed: true
+
+  PreviewExtension:
+    type: app-extension
+    platform: macOS
+    sources: [PreviewExtension]
+    settings:
+      base:
+        # 親アプリの bundle ID をプレフィックスにしないと ValidateEmbeddedBinary で失敗する
+        PRODUCT_BUNDLE_IDENTIFIER: jp.trapple.GLBQuickLook.PreviewExtension
+    dependencies:
+      - framework: vendor/GLTFKit2.xcframework
+        embed: false
+    entitlements:
+      path: PreviewExtension/PreviewExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    info:
+      path: PreviewExtension/Info.plist
+      properties:
+        CFBundleDisplayName: GLB Preview
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.quicklook.preview
+          NSExtensionPrincipalClass: "$(PRODUCT_MODULE_NAME).PreviewViewController"
+          NSExtensionAttributes:
+            QLSupportedContentTypes: [org.khronos.glb]
+            QLSupportsSearchableItems: false
