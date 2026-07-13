@@ -9,6 +9,7 @@ Native implementation with RealityKit + GLTFKit2 — no WebView, no auto-rotatio
 - Toggle dark ⇄ light background with the button in the top-right corner
 - Broken files fall back to the standard Quick Look file info view
 - Opening a .glb with the app (Finder's "Open With" / Cmd+O) shows it in a standalone viewer window
+  - To make it the default app for double-click: select a .glb in Finder → "Get Info" → "Open with:" → choose GLBQuickLook → "Change All…"
 
 ## Install (Homebrew)
 
