@@ -3,7 +3,6 @@ import OSLog
 import QuickLookUI
 import RealityKit
 import SwiftUI
-import GLTFKit2
 
 class PreviewViewController: NSViewController, QLPreviewingController {
 
@@ -19,13 +18,11 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         // 失敗時はそのまま throw し、Quick Look 標準フォールバックに任せる (Fail Fast)
         let entity: Entity
         do {
-            entity = try await GLTFRealityKitLoader.load(from: url)
+            entity = try await loadViewerEntity(from: url)
         } catch {
             Self.logger.error("GLB load failed for \(url.lastPathComponent, privacy: .public): \(error, privacy: .public)")
             throw error
         }
-        // glTF 内蔵カメラはズームを打ち消すため除去 (カメラはビュー側で制御する)
-        removeCameras(from: entity)
         let hostingView = NSHostingView(
             rootView: ModelPreviewView(modelEntity: entity, transform: transform))
         hostingView.frame = view.bounds

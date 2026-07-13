@@ -8,6 +8,7 @@ Native implementation with RealityKit + GLTFKit2 — no WebView, no auto-rotatio
 - Drag to orbit, pinch or two-finger scroll to zoom, right-drag (or Shift+drag) to pan
 - Toggle dark ⇄ light background with the button in the top-right corner
 - Broken files fall back to the standard Quick Look file info view
+- Opening a .glb with the app (Finder's "Open With" / Cmd+O) shows it in a standalone viewer window
 
 ## Install (Homebrew)
 

@@ -30,7 +30,7 @@ targets:
   GLBQuickLook:
     type: application
     platform: macOS
-    sources: [GLBQuickLook]
+    sources: [GLBQuickLook, Shared]
     info:
       path: GLBQuickLook/Info.plist
       properties:
@@ -61,7 +61,7 @@ targets:
   PreviewExtension:
     type: app-extension
     platform: macOS
-    sources: [PreviewExtension]
+    sources: [PreviewExtension, Shared]
     settings:
       base:
         # 親アプリの bundle ID をプレフィックスにしないと ValidateEmbeddedBinary で失敗する
@@ -97,6 +97,6 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
     sources:
       - Tests
-      - path: PreviewExtension/EntityFraming.swift
-      - path: PreviewExtension/ModelTransform.swift
-      - path: PreviewExtension/EntitySanitizer.swift
+      - path: Shared/EntityFraming.swift
+      - path: Shared/ModelTransform.swift
+      - path: Shared/EntitySanitizer.swift

@@ -41,10 +41,19 @@
 Quick Look 拡張は単体配布できないため「ホストアプリ + 拡張」の 2 ターゲット構成。
 
 ```
-GLBQuickLook.app (ホスト。ほぼ空。/Applications に置いて拡張を登録するだけ)
+GLBQuickLook.app (ホスト。拡張の登録 + 単体ビューア)
+├── GLBQuickLookApp        … 説明画面。AppDelegate の application(_:open:) と
+│                            Cmd+O で .glb を単体ビューアウィンドウに表示
+│                            (2026-07-13 追加。それまではほぼ空で「アプリで開くと
+│                            何も表示されない」状態だった)
+├── Shared/                … appex とアプリで共用するビューア一式
+│   ├── ModelPreviewView   … SwiftUI。RealityView + 背景切替ボタン
+│   ├── ModelTransformController … ズーム/回転/パンをモデル変換に反映
+│   ├── InteractionView    … マウス/スクロール/ピンチ入力受け (QL 制約対応)
+│   ├── ModelLoader        … GLTFKit2 ロード + 内蔵カメラ除去
+│   └── EntityFraming / EntitySanitizer
 └── PreviewExtension.appex (com.apple.quicklook.preview)
     ├── PreviewViewController  … QLPreviewingController 実装。入口
-    ├── ModelPreviewView       … SwiftUI。RealityView + 背景切替ボタン
     └── GLTFKit2 (バイナリ XCFramework を vendor/ に取得して埋め込み)
                                … .glb パース + RealityKit エンティティ変換
 ```
@@ -98,10 +107,11 @@ glTF の PBR マテリアルは環境光がないと黒く沈むため、`ImageB
 ## 受け入れ条件
 
 1. Finder でスペースキー → 小さいモデルなら体感即座 (1 秒以内目安) に表示される
-2. ドラッグで回転、スクロール/ピンチでズームできる
+2. ドラッグで回転、スクロール/ピンチでズーム、右ドラッグ (Finder 欄では Shift+ドラッグ) でパンできる
 3. 背景色トグルが効く
 4. 勝手に回転しない
 5. 不正な .glb でクラッシュせず標準フォールバックする
+6. アプリで .glb を開く (Finder の「このアプリケーションで開く」/ Cmd+O) と単体ビューアウィンドウで表示される
 
 ## QL プレビューの入力制約 (2026-07-13 追記: 「回転が効かない」障害の対策)
 
