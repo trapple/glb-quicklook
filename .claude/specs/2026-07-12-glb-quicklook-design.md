@@ -116,6 +116,15 @@ glTF の PBR マテリアルは環境光がないと黒く沈むため、`ImageB
     回転が効かなかった → 廃止。レコグナイザはホストとのイベント調停に乗るため
     両方の面で機能し、`translation(in:)` はデルタ潰しの影響も受けない
     (Apple 純正 usdz プレビュー = RAQLPreviewExtension.appex と同方式)
+- **ただし右 (中) ボタンは逆** (ifc-quicklook commit cbd1302 での実測知見):
+  buttonMask を指定したパンレコグナイザは QL パネルでは一切発火しない。一方、
+  右ボタンの生イベント (rightMouseDown/rightMouseDragged) はパネルでもビューまで
+  届く (左と違いホストに食われない。delta は例によって 0 潰しなので
+  locationInWindow の位置差分で計算する)。つまり
+  **「左＝レコグナイザ / 右＝生イベント＋位置差分」のハイブリッド**が全表示面で
+  動く構成。Finder 欄では右イベント自体が届かないため、欄では Shift+ドラッグ等の
+  代替を用意する。本プロジェクトは現状パン未実装 (回転+ズームのみ) のため該当
+  コードはないが、将来パンを追加する際はこの構成に従うこと
 - スクロール (scrollingDeltaY) とピンチ (magnification) はどの面でも潰されず届く
   (ズームだけ効いていた理由)。ズームのイベントモニタ方式は現状維持
 - ジェスチャを受ける NSView には `acceptsFirstMouse(for:) = true` と
