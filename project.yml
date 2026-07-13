@@ -98,6 +98,5 @@ targets:
     sources:
       - Tests
       - path: PreviewExtension/EntityFraming.swift
-      - path: PreviewExtension/PinchZoom.swift
-      - path: PreviewExtension/DragRotation.swift
+      - path: PreviewExtension/ModelTransform.swift
       - path: PreviewExtension/EntitySanitizer.swift

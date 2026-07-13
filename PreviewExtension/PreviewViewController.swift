@@ -9,30 +9,10 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 
     private static let logger = Logger(subsystem: "jp.trapple.GLBQuickLook", category: "preview")
 
-    private let pinchZoom = PinchZoomController()
-    private lazy var dragRotation = DragRotationController(root: pinchZoom.root)
-    private var eventMonitors: [Any] = []
+    private let transform = ModelTransformController()
 
     override func loadView() {
         view = NSView()
-        // QLホスト内では SwiftUI ジェスチャにピンチ/スクロールが配送されないため、
-        // AppKit のイベントモニタで直接拾ってズームする
-        eventMonitors.append(NSEvent.addLocalMonitorForEvents(matching: .magnify) { [weak self] event in
-            guard let self, event.window === self.view.window else { return event }
-            self.pinchZoom.applyMagnification(delta: event.magnification)
-            return event
-        } as Any)
-        eventMonitors.append(NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-            guard let self, event.window === self.view.window else { return event }
-            self.pinchZoom.applyMagnification(delta: event.scrollingDeltaY * 0.01)
-            return event
-        } as Any)
-    }
-
-    deinit {
-        for monitor in eventMonitors {
-            NSEvent.removeMonitor(monitor)
-        }
     }
 
     func preparePreviewOfFile(at url: URL) async throws {
@@ -47,7 +27,7 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         // glTF 内蔵カメラはズームを打ち消すため除去 (カメラはビュー側で制御する)
         removeCameras(from: entity)
         let hostingView = NSHostingView(
-            rootView: ModelPreviewView(modelEntity: entity, pinchZoom: pinchZoom, dragRotation: dragRotation))
+            rootView: ModelPreviewView(modelEntity: entity, transform: transform))
         hostingView.frame = view.bounds
         hostingView.autoresizingMask = [.width, .height]
         view.addSubview(hostingView)

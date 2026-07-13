@@ -5,7 +5,7 @@ English | [日本語](README-ja.md)
 A macOS Quick Look extension that previews .glb (glTF Binary) files with the spacebar in Finder.
 Native implementation with RealityKit + GLTFKit2 — no WebView, no auto-rotation.
 
-- Drag to orbit, pinch or two-finger scroll to zoom
+- Drag to orbit, pinch or two-finger scroll to zoom, right-drag (or Shift+drag) to pan
 - Toggle dark ⇄ light background with the button in the top-right corner
 - Broken files fall back to the standard Quick Look file info view
 
