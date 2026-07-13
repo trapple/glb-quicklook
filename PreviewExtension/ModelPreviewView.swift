@@ -4,6 +4,7 @@ import RealityKit
 struct ModelPreviewView: View {
     let modelEntity: Entity
     let pinchZoom: PinchZoomController
+    let dragRotation: DragRotationController
     @State private var isDarkBackground = true
 
     // spec: ダーク #262626 ⇄ ライト #d9d9d9
@@ -21,8 +22,19 @@ struct ModelPreviewView: View {
             modelEntity.position = framing.translation
             pinchZoom.root.addChild(modelEntity)
             content.add(pinchZoom.root)
+            // カメラ操作は自前 (PanGestureView + DragRotationController) なので
+            // カメラ自体は固定配置 (モデルは原点中心・最大辺 1.0 にフレーミング済み)
+            let camera = PerspectiveCamera()
+            camera.position = [0, 0, 2]
+            content.add(camera)
         }
-        .realityViewCameraControls(.orbit)
+        .overlay {
+            // QL 内では生マウスイベントが当てにならないため、レコグナイザを載せた
+            // AppKit ビューをかぶせてドラッグ回転を受ける (PanGestureView 参照)
+            PanGestureLayer { dx, dy in
+                dragRotation.applyDrag(deltaX: dx, deltaY: dy)
+            }
+        }
         .background(backgroundColor)
         .overlay(alignment: .topTrailing) {
             Button {

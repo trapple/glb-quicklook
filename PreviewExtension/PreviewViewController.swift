@@ -10,6 +10,7 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     private static let logger = Logger(subsystem: "jp.trapple.GLBQuickLook", category: "preview")
 
     private let pinchZoom = PinchZoomController()
+    private lazy var dragRotation = DragRotationController(root: pinchZoom.root)
     private var eventMonitors: [Any] = []
 
     override func loadView() {
@@ -45,7 +46,8 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         }
         // glTF 内蔵カメラはズームを打ち消すため除去 (カメラはビュー側で制御する)
         removeCameras(from: entity)
-        let hostingView = NSHostingView(rootView: ModelPreviewView(modelEntity: entity, pinchZoom: pinchZoom))
+        let hostingView = NSHostingView(
+            rootView: ModelPreviewView(modelEntity: entity, pinchZoom: pinchZoom, dragRotation: dragRotation))
         hostingView.frame = view.bounds
         hostingView.autoresizingMask = [.width, .height]
         view.addSubview(hostingView)

@@ -48,7 +48,7 @@ GLBQuickLook.app (ホスト。ほぼ空。/Applications に置いて拡張を登
 ```
 
 - **PreviewViewController**: `preparePreviewOfFile(at:)` で URL を受け取り、GLTFKit2 でロード → `NSHostingView` で SwiftUI ビューを載せる薄い層
-- **ModelPreviewView**: `RealityView` にエンティティを配置。カメラ操作は `.realityViewCameraControls(.orbit)` に任せる。右上に背景色切替ボタンを 1 つだけ置く
+- **ModelPreviewView**: `RealityView` にエンティティを配置。カメラは固定の `PerspectiveCamera` を自前配置し、ドラッグ回転は `NSPanGestureRecognizer` で受けてモデルの親 Entity を回す（後述「QL プレビューの入力制約」参照。当初の `.realityViewCameraControls(.orbit)` は QL 内で機能しないため廃止）。右上に背景色切替ボタンを 1 つだけ置く
 - 依存は **GLTFKit2 の 1 つだけ**。JS・WebView・同梱アセットなし
   - GLTFKit2 は SPM の binaryTarget (動的 XCFramework)。SPM 経由だと XcodeGen で埋め込みが構成できないため、公式リリースの XCFramework zip (checksum 検証付き) を `vendor/` に取得してホストアプリに埋め込む
 - ビルドは **XcodeGen (project.yml)** でプロジェクト定義をテキスト管理 (.xcodeproj は git 管理外)
@@ -100,6 +100,34 @@ glTF の PBR マテリアルは環境光がないと黒く沈むため、`ImageB
 3. 背景色トグルが効く
 4. 勝手に回転しない
 5. 不正な .glb でクラッシュせず標準フォールバックする
+
+## QL プレビューの入力制約 (2026-07-13 追記: 「回転が効かない」障害の対策)
+
+実地報告「QL プレビューでスクロールズームは効くが、ドラッグ回転が効かない」への対策。
+姉妹プロジェクト ifc-quicklook での原因究明 (同名日付の設計書・commit 28617d8) で
+確定した事実の移植:
+
+- **ドラッグは NSPanGestureRecognizer で受けること (最終解)**。QL のリモートビュー
+  転送 (ViewBridge) は生の mouseDown/mouseDragged を表示面ごとに違う形で殺す:
+  - スペースキーパネル: 生イベントはビューに届くが **deltaX/deltaY が 0 に潰される**
+  - Finder プレビュー欄: 生イベントは**プロセスには届く**のに、ホスト側機構
+    (ファイルドラッグ判定等) に消費されてビューの override までほぼ届かない
+  - `.realityViewCameraControls(.orbit)` はこの生イベントに依存するため QL 内では
+    回転が効かなかった → 廃止。レコグナイザはホストとのイベント調停に乗るため
+    両方の面で機能し、`translation(in:)` はデルタ潰しの影響も受けない
+    (Apple 純正 usdz プレビュー = RAQLPreviewExtension.appex と同方式)
+- スクロール (scrollingDeltaY) とピンチ (magnification) はどの面でも潰されず届く
+  (ズームだけ効いていた理由)。ズームのイベントモニタ方式は現状維持
+- ジェスチャを受ける NSView には `acceptsFirstMouse(for:) = true` と
+  `acceptsFirstResponder = true` を付ける (Finder 欄はホストウィンドウが key に
+  ならず、最初のクリックが click-through 防止で捨てられるため)
+- カメラは `.realityViewCameraControls` 廃止に伴い固定の `PerspectiveCamera` を
+  自前配置。回転はズーム (原点中心の親 Entity の等倍スケール) と同型の
+  「親 Entity の orientation 書き換え」(ターンテーブル方式、pitch は ±90° クランプ)
+- **デバッグの罠**: appex の NSLog / os_log は `log show` で一切観測できない。
+  appex 内の観測はコンテナ tmp (NSTemporaryDirectory) へのファイル追記で行う
+- 合成 CGEvent はスペースキーパネルには効くが、Finder プレビュー欄では実マウスと
+  挙動が異なり**偽陰性を出す**。欄の最終確認は実マウスでしか出来ない
 
 ## スコープ外 (将来の拡張候補)
 
